@@ -5,12 +5,29 @@ require("dotenv").config();
 const router = express.Router();
 
 router.get("/",async(req,res)=>{
-    const token = req.cookies.jwt;
-    const refresh = req.cookies.refresh;
+    const token = req.cookies.acs;
+    const refresh = req.cookies.rfs;
     if(token){
-        res.json({"route":"/homepage"});
+        jwt.verify(token,process.env.token_secret,(err,response)=>{
+            if(err){
+                res.json({"route":"/login"});
+            }
+            else if(response){
+                res.json({"route":"/homepage"});
+            }
+        });
     }
     else if(refresh){
+        jwt.verify(refresh,process.env.refresh_secret,(error,user)=>{
+            if(error){
+                res.json({"route":"/login"});
+            }
+            else if(user){
+                let token = jwt.sign({id:user.id},process.env.token_secret,{expiresIn:(10*60)});
+                res.cookie('acs',token,{httpOnly:true,maxAge:(10*60)*1000});
+                res.json({"route":"/homepage"});
+            }
+        });
         // create jwt using refresh token
         //console.log("çalışdı");
     }
