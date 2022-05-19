@@ -1,10 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('./Users');
+const bcrypt = require('bcrypt');
+const { checkHead } = require('./headermid');
 require("dotenv").config();
 const router = express.Router();
 
-router.get("/",async(req,res)=>{
+router.get("/",checkHead,async(req,res)=>{
     const token = req.cookies.acs;
     const refresh = req.cookies.rfs;
     if(token){
@@ -53,6 +55,22 @@ router.post("/signup",async(req,res)=>{
     catch(e){
         res.json({'error':'Your Name Should Not Be More Than 15 Characters'});
     }
+
+router.post("/login",async(req,res)=>{
+const user = await User.findOne({username:req.body.username});
+if(bcrypt.compare(req.body.password,user.password)){
+    const maxage = 10*60;
+        const refreshage = 24*60*7;
+        let token = jwt.sign({id:user.id,username:user.username},process.env.token_secret,{expiresIn:maxage});
+        let refresh = jwt.sign({id:user.id,username:user.username},process.env.refresh_secret,{expiresIn:refreshage});
+        res.cookie('acs',token,{httpOnly:true,maxAge:maxage*1000});
+        res.cookie('rfs',refresh,{httpOnly:true,maxAge:refreshage*1000});
+        res.json({"route":"/homepage","username":user.username});
+}
+else{
+    res.json({'error':'Please Check Your Username And Password'});
+}
+});
 });
 
 
