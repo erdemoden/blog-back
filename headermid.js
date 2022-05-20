@@ -4,7 +4,7 @@ const User = require('./Users');
 const checkHead = async(req,res,next)=>{
     let head = req.headers["Autharization"];
     if(!head){
-        res.json({"route":"/Error"});
+        res.json({"route":"/login"});
     }
     else{
         let parsed = head.split("Bearer")[1];
